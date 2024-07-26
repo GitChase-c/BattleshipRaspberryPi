@@ -1,4 +1,3 @@
-
 import random
 import time
 import keyboard
@@ -14,22 +13,14 @@ def clear_keyboard():
 
 
 #generates board of selected size
-def create_board(board_size, num_ships= None, computer=None):
+def create_board(board_size):
     #dynamiclly sizes board
     board = []
     for row in range(board_size):
         board.append([])
         for column in range(board_size):
             board[row].append("0")
-    if num_ships == None:
-        return board
-    #generating ships
-    if num_ships:
-        if computer:
-            ships = generate_ship(computer, board,num_ships)
-        else:
-            ships = generate_ship(computer,board, num_ships)
-        return board, ships
+    return board
 
 
 #displays the board
@@ -98,11 +89,11 @@ def display(board):
                     print(board[row][column], end ="|")
         print("\n"+"— "*(len(board)+1))
        
-def generate_ship(computer,board,num_ships):
+def generate_ship(computer,board,num_ships, location = None, horizontal = None, ship_size = None):
     clear_keyboard()
     board_size = len(board)
     # types of ships
-    ship_types={"patrol":2,"gunboat":3,"submarine":3,"destroyer":4,"carrier":5}
+    ship_types = {"patrol":2,"gunboat":3,"submarine":3,"destroyer":4,"carrier":5}
     # sub-optimal method to limit the amount of ships based on board size
     for i in range(5-board_size):
        ship_types.pop(list(ship_types.keys())[-1])
@@ -152,109 +143,48 @@ def generate_ship(computer,board,num_ships):
 
 
     elif not computer:
-        placing_ships=True
-        while(placing_ships):
-            ship_navigation = ["left", "right","enter"]
-            place_navigation = ["left", "right","down","up","r","enter"]
-            user_ships = {}
-            submitted_ships = []
-            # hidden board for user to visualize their ship building
-        
-            #loop to place all ships
-            for ship in range(num_ships):
-                location = [0,0]
-                selected_ship_type = keyboard_selection(iterable=list(ship_types.keys()), reserved_keys= ship_navigation)
-                selected_ship_length = ship_types[selected_ship_type]
-                ship_types.pop(selected_ship_type)
-                horizontal = True
-                for piece in range(selected_ship_length):
-                    board[0][piece] = "P"
-                display(board)
-                completed_placement = False
-                while not completed_placement:
-                    clear_keyboard()
-                    time.sleep(.05)
-                    gen_ship = []
-                    location_changes,horizontal,submit = keyboard_selection(reserved_keys=place_navigation, board=board_size, switch= horizontal)
-                
-                    location[0] -= location_changes[1]
-                    location[1] += location_changes[0]
-                
-        
-                    #preventing out of bounds for row
-                    if location[0] > board_size-1:
-                        location[0] -=1
-                    if location[0]< 0:
-                        location[0] +=1
-                    #preventing out of bounds for orientation
-                    if horizontal:
-                        if location[1] + selected_ship_length > board_size:
-                            location[1] -=1
-                    elif not horizontal:
-                        if location[0] + selected_ship_length > board_size:
-                            location[0] -=1
-                    #preventing out of bounds for column        
-                    if location[1] > board_size-1:
-                        location[1] -=1
-                    if location[1] <0:
-                        location[1] +=1
-                    # removing previous displayed ship
-                    for i in range(board_size):
-                        for j in range(board_size):
-                            board[i][j] = 0
+        gen_ship =[]
+        if location[0] > board_size-1:
+            location[0] -=1
+        if location[0]< 0:
+            location[0] +=1
+        #preventing out of bounds for orientation
+        if horizontal:
+            if location[1] + ship_size > board_size:
+                location[1] -=1
+        elif not horizontal:
+            if location[0] + ship_size > board_size:
+                location[0] -=1
+        #preventing out of bounds for column        
+        if location[1] > board_size-1:
+            location[1] -=1
+        if location[1] <0:
+            location[1] +=1
 
 
-                
-                    # displaying new
-                    if horizontal:
-                        try:
-                            for i in range(selected_ship_length):
-                                board[abs(location[0])][location[1]+i] ="P"
-                                gen_ship.append([location[0],location[1]+i])
-                        except(IndexError):
-                            print("Out of bounds please try again")
-                            location[1]=board_size-selected_ship_length
-                            board[abs(location[0])][location[1]]="P"
-                    elif not horizontal:
-                        try:
-                            for i in range(selected_ship_length):
-                                board[location[0]+i][location[1]] ="P"
-                                gen_ship.append([location[0]+i,location[1]])
-                        except(IndexError):
-                            location[0]=board_size-selected_ship_length
-                            board[abs(location[0])][location[1]]="P"
-                    for i in range(len(submitted_ships)):
-                        board[submitted_ships[i][0]][submitted_ships[i][1]] ="S"
-                    display(board)
 
-
-                
-                    if submit:
-                        if any(i in submitted_ships for i in gen_ship):
-                            for i in range(len(gen_ship)):
-                                board[gen_ship[i][0]][gen_ship[i][1]] = "I"
-                            display(board)
-                            time.sleep(.3)
-                            for i in range(len(gen_ship)):
-                                board[gen_ship[i][0]][gen_ship[i][1]] = "P"
-                            display(board)
-                        else:
-                            for i in range(len(gen_ship)):
-                                board[gen_ship[i][0]][gen_ship[i][1]] = "S"
-                            user_ships.update({f"ship: {ship+1}": gen_ship})
-                            submitted_ships.extend(gen_ship)
-                            gen_ship = []
-                            display(board)
-                            completed_placement = True
-                            placing_ships=False
+        # displaying new
+        if horizontal:
+            try:
+                for i in range(ship_size):
+                    board[abs(location[0])][location[1]+i] ="P"
+                    gen_ship.append([location[0],location[1]+i])
+            except(IndexError):
+                location[1]=board_size-ship_size
+                board[abs(location[0])][location[1]]="P"
+        elif not horizontal:
+            try:
+                for i in range(ship_size):
+                    board[location[0]+i][location[1]] ="P"
+                    gen_ship.append([location[0]+i,location[1]])
+            except(IndexError):
+                location[0]=board_size-ship_size
+                board[abs(location[0])][location[1]]="P"
+        return gen_ship
                     
-            for row in range(board_size):
-                for column in range(board_size):
-                    board[row][column] = 0
-            time.sleep(1.5)
-            return user_ships
+            
 
-# get a  guess
+# get a guess
 def generate_guess(computer,board, previous_guesses):
         board_size = len(board)
         computer_turn=True
@@ -307,7 +237,7 @@ def check_guess(strike, ships, board, previous_guesses):
 
 
 #creates keyboard accessable menus
-def keyboard_selection(iterable= None, board= None, reserved_keys= None, switch= None):
+def keyboard_selection(iterable= None, reserved_keys= None, switch= None):
     i = 0
     y = 0
     key = ""
@@ -317,9 +247,6 @@ def keyboard_selection(iterable= None, board= None, reserved_keys= None, switch=
         if event.event_type == keyboard.KEY_DOWN:
             key = event.name
         if iterable:
-            if board:
-                board = create_board(iterable[i])
-                display(board)
             statment = ""
             for iter in range(len(iterable)):
                 if iter == i:
@@ -331,9 +258,6 @@ def keyboard_selection(iterable= None, board= None, reserved_keys= None, switch=
             if key == reserved_keys[0]:
                 if i > 0:
                     i -=1
-                    if board:
-                        board = create_board(iterable[i])
-                        display(board)
                     iterable[i] = f">{iterable[i]}<"
                     print(*iterable, sep="  ",end="\r")
                     try:
@@ -343,9 +267,6 @@ def keyboard_selection(iterable= None, board= None, reserved_keys= None, switch=
             elif key == reserved_keys[1]:
                 if i < len(iterable) -1:
                     i+= 1
-                    if board:
-                        board = create_board(iterable[i])
-                        display(board)
                     iterable[i] = f">{iterable[i]}<"
                     print(*iterable, sep="  ",end="\r")
                     try:
@@ -358,7 +279,7 @@ def keyboard_selection(iterable= None, board= None, reserved_keys= None, switch=
                 return(iterable[i])
             time.sleep(.15)
         else:
-            submit = False # still selecting
+            submit = True # still selecting
             if key == reserved_keys[0]:
                     i-=1
             if key == reserved_keys[1]:
@@ -370,7 +291,7 @@ def keyboard_selection(iterable= None, board= None, reserved_keys= None, switch=
             if key == reserved_keys[4]:
                 switch = not switch
             if key == reserved_keys[5]:
-                submit = True
+                submit = False
             clear_keyboard()
             return[i,y], switch, submit
 
@@ -395,7 +316,7 @@ def get_settings():
     print("How many ships would you like?")
     user_configs.append(keyboard_selection(iterable=ship_options, reserved_keys=navigation))
     # display board size
-    user_configs.append(keyboard_selection(iterable=board_options,board=True, reserved_keys=navigation))
+    user_configs.append(keyboard_selection(iterable=board_options, reserved_keys=navigation))
     return user_configs
    
 # main game loop, combines all the functions into a playable game
@@ -424,19 +345,40 @@ def main ():
 
 
         # First Player's boards and ships (first player will always be human)
-        board_1,ships_1 = create_board(size,num_ships=number_of_ships,computer=False)
+        board_1 = create_board(size)
+        ships_1 = {}
+        for ship in range(2):
+            placing_ship = True
+            location = [0,0]
+            horizontal = True
+            while placing_ship:
+                gen_ship = generate_ship(False, board_1, number_of_ships, location, horizontal, 2)
+                display(board_1)
+                location_changes,horizontal, placing_ship = keyboard_selection(reserved_keys=["left", "right","down","up","r","enter"], switch=horizontal)
+                location[0] -= location_changes[1]
+                location[1] += location_changes[0]
+                gen_ship = generate_ship(False,board_1, number_of_ships, location,horizontal,2)
+                if placing_ship == False:
+                    ships_1.update({ship: gen_ship})
+                display(board_1)
+                for i in range(size):
+                        for j in range(size):
+                            board_1[i][j] = 0
+                
+        for row in range(size):
+                for column in range(size):
+                    board_1[row][column] = 0
         # Second Player's boards and ships
-        board_2,ships_2 = create_board(size,num_ships=number_of_ships,computer=computer)
-
+        board_2= create_board(size)
+        ships_2 = generate_ship(computer,board_1, number_of_ships)
 
         display(board_2)
         not_a_miss=True
         sink_count = 0
         while not_a_miss:
             clear_keyboard()
-            player_2=True
             player_turn=False
-            while(player_2):
+            while(not player_turn):
                 print("Player 2 turn")
                 time.sleep(1.5)
                 strike = generate_guess(computer,board_1,previous_guesses_1)
@@ -444,7 +386,6 @@ def main ():
                 display(board_1)
                 time.sleep(1.3)
                 if hit == 0:
-                        player_2=False
                         player_turn=True
                 elif hit == 2:
                     sink_count +=1
@@ -459,7 +400,6 @@ def main ():
                     display(board_2)
                     time.sleep(1.2)
                     if hit == 0:
-                        player_2=True
                         player_turn=False
                     elif hit == 2:
                         sink_count +=1
